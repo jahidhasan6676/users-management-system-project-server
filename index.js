@@ -28,9 +28,19 @@ async function run() {
     const usersCollection = client.db("Users_Management").collection("Users");
 
     app.get("/users", async (req, res) => {
-      const cursor = usersCollection.find();
+      const {search} = req.query;
+      console.log(search)
+
+      let option = {};
+      if(search){
+        option = {name: { $regex: search, $options: "i" }}
+      }
+      // let option = {name:{$regex: search, $options: "i"}}
+
+      const cursor = usersCollection.find(option);
       const result = await cursor.toArray();
       res.send(result);
+
     });
 
     app.get("/users/:id", async (req, res) => {
@@ -56,10 +66,25 @@ async function run() {
           name: user.name,
           email: user.email,
           gender: user.gender,
-          status: user.status
+          status: user.status,
         }
       };
       const result = await usersCollection.updateOne(filter,updateUser,options);
+      res.send(result);
+    })
+
+    // accept user
+    app.put("/status/:id", async(req, res) => {
+      const id = req.params.id;
+      // const user = req.body;
+      const filter = { _id: new ObjectId(id) };
+      // const options = { upsert: true };
+      const updateUser = {
+        $set: {
+          isCompleted: true,
+        }
+      };
+      const result = await usersCollection.updateOne(filter,updateUser);
       res.send(result);
     })
 
